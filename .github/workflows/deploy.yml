@@ -14,21 +14,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Use Node 22 (required by Quartz 4.x)
+      # Quartz 4 requires Node 22+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
-      # Ensure npm >= 10.9.2 (some runners lag slightly)
-      - run: npm i -g npm@^10.9.2
-      - run: node -v && npm -v
+      # Use the Quartz CLI directly (no package.json scripts required)
+      - name: Build site with Quartz
+        run: npx -y @jackyzha0/quartz@latest build
 
-      # Install deps & build
-      - run: npm ci || npm install
-      - run: npm run build
-
-      # Publish the ./public folder
+      # Publish the generated ./public folder
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
