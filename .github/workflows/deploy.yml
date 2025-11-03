@@ -13,20 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      # Quartz v4 needs Node 22+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
 
-      # Build with the Quartz CLI (no package.json scripts needed)
+      - name: Install dependencies
+        run: npm ci || npm install
+
       - name: Build site with Quartz
-        run: npx -y quartz build -d content -o public
-
-      # Publish ./public to GitHub Pages
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+        run: npx quartz build -d content -o public
