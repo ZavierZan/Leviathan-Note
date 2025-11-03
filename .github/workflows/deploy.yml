@@ -1,31 +1,37 @@
-name: Deploy Quartz site
-
+name: Upload Preview Deployment
 on:
-  push:
-    branches: [main, master]
-  workflow_dispatch: {}
+  workflow_run:
+    workflows: ["Build Preview Deployment"]
+    types:
+      - completed
 
 permissions:
-  contents: write
+  actions: read
+  deployments: write
+  contents: read
+  pull-requests: write
 
 jobs:
-  build:
+  deploy-preview:
+    if: ${{ github.repository == 'jackyzha0/quartz' && github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    name: Deploy Preview to Cloudflare Pages
     steps:
-      - uses: actions/checkout@v4
-
-      # Quartz 4 requires Node 22+
-      - uses: actions/setup-node@v4
+      - name: Download build artifact
+        uses: actions/download-artifact@v6
+        id: preview-build-artifact
         with:
-          node-version: '22'
+          name: preview-build
+          path: build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
 
-      # Use the Quartz CLI directly (no package.json scripts required)
-      - name: Build site with Quartz
-        run: npx -y @jackyzha0/quartz@latest build
-
-      # Publish the generated ./public folder
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Deploy to Cloudflare Pages
+        uses: AdrianGonz97/refined-cf-pages-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          projectName: quartz
+          deploymentName: Branch Preview
+          directory: ${{ steps.preview-build-artifact.outputs.download-path }}
