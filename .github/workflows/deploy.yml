@@ -2,24 +2,33 @@ name: Deploy Quartz site
 
 on:
   push:
-    branches:
-      - main
-      - master
-  workflow_dispatch: {}   # allows “Run workflow” button
+    branches: [main, master]
+  workflow_dispatch: {}
 
 permissions:
-  contents: write         # needed for gh-pages push
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+
+      # Use Node 22 (required by Quartz 4.x)
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
-      - run: npm install
+          node-version: '22'
+          cache: 'npm'
+
+      # Ensure npm >= 10.9.2 (some runners lag slightly)
+      - run: npm i -g npm@^10.9.2
+      - run: node -v && npm -v
+
+      # Install deps & build
+      - run: npm ci || npm install
       - run: npm run build
+
+      # Publish the ./public folder
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
