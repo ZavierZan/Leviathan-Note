@@ -2,7 +2,13 @@ name: Deploy Quartz site
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - master
+  workflow_dispatch: {}   # allows “Run workflow” button
+
+permissions:
+  contents: write         # needed for gh-pages push
 
 jobs:
   build:
